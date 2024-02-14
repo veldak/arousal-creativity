@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Audio test demo</title>
+    <script src="jspsych-6.1.0/jspsych.js"></script>
+    <script src="jspsych-6.1.0/plugins/jspsych-fullscreen.js"></script>
+    <script src="jspsych-audio-keyboard-with-replay.js"></script>
+</head>
+
+<body>
+
+    <!-- Change 3: Adding extra scripts for Qualtrics -->
+    <!-- COPY PASTE TO QUALTRICS FROM HERE -->
+    <link href="https://kywch.github.io/Mood-Induction_jsPsych/jspsych-6.1.0/css/jspsych.css" rel="stylesheet"
+        type="text/css">
+    </link>
+    <div>
+        <span style="font-size: 24px;">
+            <br><br>
+            If you are seeing this message for <span style="color: rgb(255, 0, 0);">
+                <b>more than 5 minutes</b></span>,<br>
+            please screen-capture this screen and send the image to us.
+            <br><br>
+            <span style="font-size: 28px;">We are very sorry for the inconvenience.</span>
+        </span>
+    </div>
+
+    <!-- Change 2: Adding `display_stage` CSS and Div -->
+    <style>
+        #display_stage_background {
+            width: 100vw;
+            background-color: white;
+            z-index: -1;
+        }
+
+        #display_stage {
+            position: fixed;
+            left: 1vw;
+            top: 1vh;
+            height: 98vh;
+            width: 98vw;
+            background-color: white;
+            box-shadow: 1px 1px 1px #999;
+            border-radius: 15px;
+            z-index: 0;
+            overflow-y: hidden;
+            overflow-x: hidden;
+        }
+
+        #centerbox {
+            width: 80vw;
+            height: 30vh;
+            position: relative;
+            top: 40%;
+            font-size: 20pt;
+            line-height: normal;
+        }
+    </style>
+    <!-- COPY PASTE TO QUALTRICS UP TO HERE -->
+
+    <div id='display_stage_background'></div>
+    <div id='display_stage'></div>
+
+</body>
+
+<script>
+    /* create timeline */
+    var timeline = [];
+    var audio_test_rt = [];
+    var audio_test_order = [];
+
+    var audio_url = 'https://kywch.github.io/Mood-Induction_jsPsych/audiotest/';
+    var audio_seed = ['c', 'd', 'g', 'k', 'p', 'q', 't'];
+
+    // generate audiotest trials
+    function generate_audiotest_block(audio_url, audio_seed) {
+
+        audio_test_order = jsPsych.randomization.shuffle(audio_seed);
+        let block_audiotest = [];
+        let enter_audiotest_page = {
+            type: 'audio-keyboard-with-replay',
+            prompt: "<div id=centerbox><p>" +
+                "The task you are about to do requires listening to sounds. Please adjust your sound setting.<br> " +
+                "<p>We will do a simple task to make sure you can hear the sounds. </p>" +
+                "<p>In the next pages, press the alphabet key associated with the played sound to proceed. </p> " +
+                "<br><p>If you are ready, press the <strong>'n'</strong> key to proceed.</p>" +
+                "<p>If the key doesn't work, please click the screen and press again.</p></div>",
+            choices: ['n'],
+        };
+        block_audiotest.push(enter_audiotest_page);
+
+        for (let ii = 0; ii < audio_test_order.length; ii++) {
+            let audiotest_trial = {
+                type: 'audio-keyboard-with-replay',
+                stimulus: audio_url + audio_test_order[ii] + '.mp3',
+                prompt: "<div id=centerbox>" +
+                    "Trial " + (ii + 1) + " / " + audio_test_order.length + " : " +
+                    "Please press the alphabet key you just heard." +
+                    "<p>To replay, press the <strong>'r'</strong> key. </p></div>",
+                choices: [audio_test_order[ii]],
+                on_finish: function (data) {
+                    audio_test_rt.push(data.rt)
+                }
+            }
+            block_audiotest.push(audiotest_trial);
+        }
+        return {
+            timeline: block_audiotest
+        };
+    }
+
+    // use the full screen
+    // also playing sound only works after an interaction with user, like button press
+    timeline.push({
+        type: 'fullscreen',
+        message: '<p>Audio test will start when you press the button below.</p><p>',
+        fullscreen_mode: true
+    });
+
+    timeline.push(generate_audiotest_block(audio_url, audio_seed));
+
+    timeline.push({
+        type: 'fullscreen',
+        fullscreen_mode: false
+    });
+
+    /* Change 1: Using `display_element` */
+    jsPsych.init({
+        timeline: timeline,
+        display_element: 'display_stage'
+    })
+</script>
+
+</html>
