@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My experiment</title>
+  <script src="https://veldak.github.io/arousal-creativity/jspsych-6.3.1/jspsych.js"></script>
+  <script src="https://veldak.github.io/arousal-creativity/jspsych-6.3.1/plugins/jspsych-instructions.js"></script>
+  <script src="https://veldak.github.io/arousal-creativity/jspsych-6.3.1/plugins/jspsych-html-keyboard-response.js"></script>
+  <link rel="stylesheet" href="https://veldak.github.io/arousal-creativity/jspsych-6.3.1/css/jspsych.css"></link>
+</head>
+<body>
+  <audio id="backgroundAudio" autoplay loop>
+    <source src="" type="audio/mpeg">
+  </audio>
+</body>
+<script>
+
+/* create timeline */
+var timeline = [];
+
+// Function to shuffle arrays 
+function shuffleArray(array) {
+  for (var i = array.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+// Define prompts array
+var prompts = [
+  "belt", "lamp", "brick", "scarf", "pencil", "baseball", "pillow", "balloon", "comb"
+];
+
+// Define music samples
+var musicSamples = [
+  'https://veldak.github.io/arousal-creativity/music_stim/H1.mp3', 
+  'https://veldak.github.io/arousal-creativity/music_stim/H2.mp3',
+  'https://veldak.github.io/arousal-creativity/music_stim/H3.mp3'
+];
+
+// Preload audio
+var audio = document.getElementById('backgroundAudio');
+audio.loop = true;
+
+// Function to randomly select a musical sample
+function selectRandomMusicSample() {
+  return musicSamples[Math.floor(Math.random() * musicSamples.length)];
+}
+
+// Define instructions for AUT 
+var AUTinstructions = {
+  type: "instructions",
+  pages: [
+    'In this task, you will be asked to enter as many creative, alternate uses for a common household object you can in sixty seconds.',
+    'Press enter after each new idea to submit.',
+    'There will be music playing in the background, which should be adjusted to a comfortable volume. Although the music will be playing, you do not need to focus on it as you will not be asked any particular questions about it.',
+    'Music will begin playing for 15 seconds prior to the first-word prompt. When you are ready to begin, press "Continue".'
+  ],
+  button_label_next: "Continue",
+  button_label_previous: "Back",
+  show_clickable_nav: true
+};
+
+// Add instructions to the timeline
+timeline.push(AUTinstructions);
+
+// Function to define Alternate Uses Task
+function createAlternateUsesTask(prompts) {
+  var localTimeline = []; // Create a local timeline array
+
+  // Shuffling prompts for each block
+  shuffleArray(prompts);
+
+  // Define used prompts array to track used prompts
+  var usedPrompts = [];
+
+  // Iterate through prompts
+  for (var i = 0; i < 3; i++) {
+    var prompt = prompts[i];
+    if (!usedPrompts.includes(prompt)) {
+      usedPrompts.push(prompt);
+
+      // Define Alternate Uses Task trial
+      var alternateUsesTrial = {
+        type: "html-keyboard-response",
+        stimulus: '<p style="font-size: 32px; font-weight: bold;">' + prompt + '</p>' +
+          '<textarea id="responseArea" rows="3" cols="65"></textarea>' +
+          '<p id="timer">Time remaining: 60 seconds</p>',
+        choices: jsPsych.ALL_KEYS,
+        response_ends_trial: false, // The trial doesn't end on a response
+        trial_duration: 60000, // 60 second trial
+        on_load: function () {
+          // Listen for the Enter key press within the textarea
+          document.getElementById('responseArea').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+              e.preventDefault(); // Prevent the default behavior of Enter key
+              var response = document.getElementById('responseArea').value.trim(); // Get the response from the text area
+              var stimulus = document.querySelector('.jspsych-content').innerHTML; // Get the stimulus prompt
+              var trial_data = {
+                response: response,
+                stimulus: stimulus,
+                time_elapsed: jsPsych.totalTime(), // Record the total time elapsed
+                trial_index: jsPsych.currentTrial().trial_index, // Record the trial index
+                rt: jsPsych.data.getLastTrialData().select('rt').values[0] // Record the response time
+              };
+              jsPsych.data.get().push(trial_data); // Store all data in the data object
+              document.getElementById('responseArea').value = ''; // Clear the response area after each entry
+            }
+          });
+
+          // Timer logic
+          var timerElement = document.getElementById('timer');
+          var timeLeft = 60; // Initial time in seconds
+          var timerInterval = setInterval(function () {
+            timeLeft--;
+            timerElement.textContent = 'Time remaining: ' + timeLeft + ' seconds';
+            if (timeLeft <= 0) {
+              clearInterval(timerInterval);
+              jsPsych.endCurrentTrial(); // End the trial when the timer is up
+            }
+          }, 1000);
+        }
+      };
+
+      localTimeline.push(alternateUsesTrial);
+    }
+  }
+
+  return localTimeline;
+}
+
+// Add Alternate Uses Task to the timeline
+timeline.push.apply(timeline, createAlternateUsesTask(prompts));
+
+/* start the experiment */
+jsPsych.init({
+  timeline: timeline,
+  on_finish: function() {
+    jsPsych.data.displayData('csv');
+  }
+});
+
+</script>
+</html>

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Music & Creative Cognition</title>
+  <script src="https://veldak.github.io/arousal-creativity/jspsych-6.3.1/jspsych.js"></script>
+  <script src="https://veldak.github.io/arousal-creativity/jspsych-6.3.1/plugins/jspsych-instructions.js"></script>
+  <script src="https://veldak.github.io/arousal-creativity/jspsych-6.3.1/plugins/jspsych-html-keyboard-response.js"></script>
+  <link rel="stylesheet" href="https://veldak.github.io/arousal-creativity/jspsych-6.3.1/css/jspsych.css"></link>
+  
+  <script type="text/javascript" src="lib/vendors/jquery-2.2.0.min.js"></script>
+  <script type="text/javascript" src="lib/jspsych-pavlovia-2020.2.js"></script>
+</head>
+<body>
+<audio id="backgroundAudio" loop>
+    <source src="" type="audio/mpeg">
+  </audio>
+</body>
+<script>
+
+/* create timeline */
+var timeline = [];
+
+/* init connection with pavlovia.org */
+		var pavlovia_init = {
+			type: "pavlovia",
+			command: "init"
+		};
+		timeline.push(pavlovia_init);
+
+// Function to shuffle arrays 
+function shuffleArray(array) {
+  for (var i = array.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+// ----------------------------------------Task Instructions----------------------------------//
+// Show instructions for AUT 
+function addAUTinstructions() {
+  var AUTinstructions = {
+    type: "instructions",
+    pages: [
+      'In this task, you will be asked to enter as many creative, alternate uses for a common household object you can in sixty seconds.',
+      'Press enter after each new idea to submit.',
+      'There will be music playing in the background, which should be adjusted to a comfortable volume. Although the music will be playing, you do not need to focus on it as you will not be asked any particular questions about it.',
+      'Music will begin playing for 15 seconds prior to the first-word prompt. When you are ready to begin, press "Continue".'
+    ],
+    button_label_next: "Continue",
+    button_label_previous: "Back",
+    show_clickable_nav: true,
+    on_finish: function() {
+    // Start music playback after the instructions are completed
+    audio.src = selectRandomMusicSample();
+    audio.play();
+     }
+  };
+  return AUTinstructions;
+}
+
+//Function to show instructions for RAT 
+function addRATinstructions() {
+  var RATinstructions = {
+    type: "instructions",
+    pages: [
+      'In this task, you will be presented with three words that have some association with each other.',
+      'You are asked to come up with a fourth word that associates all three words.',
+      'There will be music playing in the background, which should be adjusted to a comfortable volume. Although the music will be playing, you do not need to focus on it as you will not be asked any particular questions about it.',
+      'You will have 3 minutes for the entirety of the task. If you complete it earlier, you are free to proceed.',
+      'Music will begin playing for 15 seconds before the first trial. When you are ready to begin, press "Continue".'
+    ],
+    button_label_next: "Continue",
+    button_label_previous: "Back",
+    show_clickable_nav: true,
+    on_finish: function() {
+    // Start music playback after the instructions are completed
+    audio.src = selectRandomMusicSample();
+    audio.play();
+    }
+  };
+   return RATinstructions;
+}
+
+//------------------------------------------Music Stimuli----------------------------------------------//
+var musicSamples = [
+  'https://veldak.github.io/arousal-creativity/music_stim/H1.mp3', 
+  'https://veldak.github.io/arousal-creativity/music_stim/H2.mp3',
+  'https://veldak.github.io/arousal-creativity/music_stim/H3.mp3',
+  'https://veldak.github.io/arousal-creativity/music_stim/H4.mp3', 
+  'https://veldak.github.io/arousal-creativity/music_stim/H5.mp3',
+  'https://veldak.github.io/arousal-creativity/music_stim/H6.mp3'
+];
+
+// Function to randomly select a musical sample
+function selectRandomMusicSample() {
+  return musicSamples[Math.floor(Math.random() * musicSamples.length)];
+}
+
+// Preload audio
+var audio = document.getElementById('backgroundAudio');
+audio.loop = true;
+
+
+//-------------------------------Defining Additional Screens ------------------------------------//
+
+function fixationCross(duration) {
+  var fixationTrial = {
+    type: 'html-keyboard-response',
+    stimulus: '<div style="font-size: 72px;">+</div>',
+    choices: jsPsych.NO_KEYS,
+    trial_duration: duration
+     };
+  return fixationTrial;
+}
+
+// Define a function to pause the music
+function pauseMusic() {
+    var pauseMusicTrial = {
+        type: 'html-keyboard-response',
+        stimulus: 'Thank you for completing the task. The music will now pause and the next task will begin shortly.',
+        trial_duration: 10000, // Adjust the duration as needed
+        on_start: function() {
+            // Pause the background music
+            audio.pause();
+        }
+    };
+    return pauseMusicTrial;
+}
+
+// Define a function to display end screen
+function endScreen() {
+    var endScreen = {
+        type: 'html-keyboard-response',
+        stimulus: 'You have completed the experiment. This screen will now close, please return to Qualtrics.',
+        trial_duration: 10000, // Adjust the duration as needed
+        on_start: function() {
+            // Pause the background music
+            audio.pause();
+        }
+    };
+    return endScreen;
+}
+
+//-------------------------------Defining the Alternate Uses Task------------------------------------//
+// Define prompts array
+var prompts = [
+  "belt", "lamp", "brick", "scarf", "pencil", "baseball", "pillow", "balloon", "comb"
+];
+
+// Function to define Alternate Uses Task
+function createAlternateUsesTask(prompts) {
+  var localTimeline = []; // Create a local timeline array
+
+  // Shuffling prompts for each block
+  shuffleArray(prompts);
+
+  // Define used prompts array to track used prompts
+  var usedPrompts = [];
+
+  // Iterate through prompts
+  for (var i = 0; i < 3; i++) {
+    var prompt = prompts[i];
+    if (!usedPrompts.includes(prompt)) {
+      usedPrompts.push(prompt);
+
+      // Define Alternate Uses Task trial
+      var alternateUsesTrial = {
+        type: "html-keyboard-response",
+        stimulus:  '<p style="font-size: 32px; font-weight: bold;">' + prompt + '</p>' +
+          '<textarea id="responseArea" rows="3" cols="65"></textarea>' +
+          '<p id="AUTtimer">Time remaining: 60 seconds</p>',
+        choices: jsPsych.ALL_KEYS,
+        response_ends_trial: false, // The trial doesn't end on a response
+        trial_duration: 60000, // 60 second trial
+        on_load: function () {
+          // Listen for the Enter key press within the textarea
+          document.getElementById('responseArea').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+              e.preventDefault(); // Prevent the default behavior of Enter key
+              var response = document.getElementById('responseArea').value.trim(); // Get the response from the text area
+              var stimulus = document.querySelector('.jspsych-content').innerHTML; // Get the stimulus prompt
+              var trial_data = {
+                response: response,
+                stimulus: stimulus,
+                time_elapsed: jsPsych.totalTime(), // Record the total time elapsed
+                trial_index: jsPsych.currentTrial().trial_index, // Record the trial index
+                rt: jsPsych.data.getLastTrialData().select('rt').values[0] // Record the response time
+              };
+              jsPsych.data.get().push(trial_data); // Store all data in the data object
+              document.getElementById('responseArea').value = ''; // Clear the response area after each entry
+            }
+          });
+
+          // Timer logic
+          var timerElement = document.getElementById('AUTtimer');
+          var timeLeft = 60; // Initial time in seconds
+          var timerInterval = setInterval(function () {
+            timeLeft--;
+            timerElement.textContent = 'Time remaining: ' + timeLeft + ' seconds';
+            if (timeLeft <= 0) {
+              clearInterval(timerInterval);
+              jsPsych.endCurrentTrial(); // End the trial when the timer is up
+            }
+          }, 1000);
+        }
+      };
+
+      localTimeline.push(alternateUsesTrial);
+    }
+  }
+
+  return localTimeline;
+}
+
+//-----------------------------Defining the Remote Associates Task-----------------------------------// 
+// Define word triads with difficulty levels
+var wordTriads = [
+    { words: ["Opera", "Hand", "Dish"], correct: "Soap", difficulty: "medium"},
+    { words: ["Right", "Cat", "Carbon"], correct: "Copy", difficulty: "hard" },
+    { words: ["Cottage", "Swiss", "Cake"], correct: "Cheese", difficulty: "easy"},
+    { words: ["Blank", "List", "Mate"], correct: "Check", difficulty: "medium" },
+    { words: ["Dust", "Cereal", "Fish"], correct: "Bowl", difficulty: "hard"},
+    { words: ["Worm", "Shelf", "End"], correct: "Book",  difficulty: "easy"},
+    { words: ["Salt", "Deep", "Foam"], correct: "Sea", difficulty: "medium"},
+    { words: ["House", "Thumb", "Pepper"], correct: "Green", difficulty: "hard"},
+    { words: ["Cream", "Skate", "Water"], correct: "Ice", difficulty: "easy"},
+    // Add more triads with their difficulty levels
+];
+// Define timerText
+//var timerText = '<div id="RATtimer">03:00</div>'; // Initial timer display
+
+// Function to shuffle and select one easy, one medium, and one hard prompt for the block
+function createRemoteAssocTask(triads) {
+    var localTimeline = [];
+    
+    var trialIndex = 0; // To track the trial number
+
+   // Timer setup
+    var startTime = 180000; // 3 minutes in milliseconds
+    var currentTime = startTime;
+    var timerText = '<div id="RATtimer">03:00</div>'; // Initial timer display
+
+    // Update timer every second
+    var RATtimerInterval = setInterval(updateTimer, 1000);
+
+    function updateTimer() {
+        var minutes = Math.floor(currentTime / 60000);
+        var seconds = ((currentTime % 60000) / 1000).toFixed(0);
+        seconds = (seconds < 10 ? '0' : '') + seconds;
+
+    // Display the updated time
+    document.getElementById('RATtimer').innerHTML = '0' + minutes + ':' + seconds;
+    // Set initial timer display only for the first update
+    if (currentTime === startTime) {
+        document.getElementById('RATtimer').innerHTML = '03:00';
+    }
+    if (currentTime <= 0 || trialIndex === 3) {
+        clearInterval(RATtimerInterval); // Stop the timer
+        jsPsych.endCurrentTimeline(); // End the current local timeline
+    } else {
+        currentTime -= 1000;
+    }
+}
+
+    // Shuffle the triads for randomness
+    shuffleArray(triads);
+
+    var easyTriad, mediumTriad, hardTriad;
+
+    // Iterate through the shuffled triads to find one easy, one medium, and one hard
+    triads.forEach(function(triad) {
+        if (triad.difficulty === "easy" && !easyTriad) {
+            easyTriad = triad;
+        } else if (triad.difficulty === "medium" && !mediumTriad) {
+            mediumTriad = triad;
+        } else if (triad.difficulty === "hard" && !hardTriad) {
+            hardTriad = triad;
+        }
+
+        // If we have found one easy, one medium, and one hard triad, exit the loop
+        if (easyTriad && mediumTriad && hardTriad) {
+            return;
+        }
+    });
+
+    // Create trials for each selected prompt
+    [easyTriad, mediumTriad, hardTriad].forEach(function(triad) {
+        var remoteAssocTrial = {
+            type: 'html-keyboard-response',
+            stimulus: timerText + // Adding timer display to stimulus
+                      '<p style="font-size: 40px;">' + triad.words.join(" / ") + '</p>' +
+                      '<input type="text" id="response_' + triad.correct + '" autocomplete="off">',
+            choices: jsPsych.ALL_KEYS,
+            trial_duration: 180000, // 3 minutes
+            response_ends_trial: false,
+            on_load: function() {
+                // Listen for the Enter key press within the input field
+                document.getElementById('response_' + triad.correct).addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault(); // Prevent the default behavior of Enter key
+                        var response = document.getElementById('response_' + triad.correct).value.trim().toLowerCase();
+                        jsPsych.data.get().push({ response: response });
+                        jsPsych.finishTrial();
+                    }
+                });
+            },
+            on_finish: function(data) {
+                var response = document.getElementById('response_' + triad.correct).value.trim().toLowerCase();
+                data.response = response;
+                data.correctness = (response === triad.correct.toLowerCase());
+
+                trialIndex++; // Increment trial number
+            }
+        };
+
+        localTimeline.push(remoteAssocTrial);
+    });
+
+    return localTimeline;
+}
+
+//------------------------------ experiment management (task orders) ---------------------------//
+ var taskOrder = Math.round(Math.random()); // 0 or 1
+
+    // Add instructions for the first task based on taskOrder
+    if (taskOrder === 0) {
+    timeline.push(addAUTinstructions());
+    } else {
+    timeline.push(addRATinstructions());
+    }
+
+    // Add tasks based on taskOrder
+    if (taskOrder === 0) {
+    timeline.push(fixationCross(15000));
+    timeline.push.apply(timeline, createAlternateUsesTask(prompts));
+    timeline.push(pauseMusic());
+    timeline.push(addRATinstructions());
+    timeline.push.apply(timeline, createRemoteAssocTask(wordTriads));
+    timeline.push(endScreen());
+    } else {
+    timeline.push(fixationCross(1500));
+    timeline.push.apply(timeline, createRemoteAssocTask(wordTriads));
+    timeline.push(pauseMusic());
+    timeline.push(addAUTinstructions());
+    timeline.push.apply(timeline, createAlternateUsesTask(prompts));
+    timeline.push(endScreen());
+    }
+
+/* finish connection with pavlovia.org */
+var pavlovia_finish = '{'
+    type: "pavlovia",
+    command: "finish"
+    '}';
+timeline.push(pavlovia_finish);
+
+/* start the experiment */
+jsPsych.init({
+  timeline: timeline,
+  on_finish: function() {
+    jsPsych.data.displayData('csv');
+  }
+});
+
+</script>
+</html>

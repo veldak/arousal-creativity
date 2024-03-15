@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My experiment</title>
+  <script src="https://veldak.github.io/arousal-creativity/jspsych-6.3.1/jspsych.js"></script>
+  <script src="https://veldak.github.io/arousal-creativity/jspsych-6.3.1/plugins/jspsych-instructions.js"></script>
+  <script src="https://veldak.github.io/arousal-creativity/jspsych-6.3.1/plugins/jspsych-html-keyboard-response.js"></script>
+  <link rel="stylesheet" href="https://veldak.github.io/arousal-creativity/jspsych-6.3.1/css/jspsych.css"></link>
+</head>
+<body></body>
+<script>
+
+/* create timeline */
+var timeline = [];
+
+// Define music samples
+var musicSamples = [
+  'https://veldak.github.io/arousal-creativity/music_stim/H1.mp3', 
+  'https://veldak.github.io/arousal-creativity/music_stim/H2.mp3',
+  'https://veldak.github.io/arousal-creativity/music_stim/H3.mp3'
+];
+
+// Function to randomly select a musical sample
+function selectRandomMusicSample() {
+  return musicSamples[Math.floor(Math.random() * musicSamples.length)];
+}
+
+/* Remote Associates Task */ 
+//define RAT Instructions
+
+var RATinstructions = {
+  type: "instructions",
+  pages: [
+    'In this task, you will be presented with three words that have some association with each other.',
+    'You are asked to come up with a fourth word that associates all three words.',
+    'There will be music playing in the background, which should be adjusted to a comfortable volume. Although the music will be playing, you do not need to focus on it as you will not be asked any particular questions about it.',
+    'You will have 3 minutes for the entirety of the task. If you complete it earlier, you are free to proceed.',
+    'Music will begin playing for 15 seconds before the first trial. When you are ready to begin, press "Continue".'
+  ],
+  button_label_next: "Continue",
+  button_label_previous: "Back",
+  show_clickable_nav: true
+};
+
+timeline.push(RATinstructions);
+
+// Function to shuffle array 
+function shuffleArray(array) {
+  for (var i = array.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+// Define word triads with difficulty levels
+var wordTriads = [
+    { words: ["Opera", "Hand", "Dish"], correct: "Soap", difficulty: "medium"},
+    { words: ["Right", "Cat", "Carbon"], correct: "Copy", difficulty: "hard" },
+    { words: ["Cottage", "Swiss", "Cake"], correct: "Cheese", difficulty: "easy"},
+    { words: ["Blank", "List", "Mate"], correct: "Check", difficulty: "medium" },
+    { words: ["Dust", "Cereal", "Fish"], correct: "Bowl", difficulty: "hard"},
+    { words: ["Worm", "Shelf", "End"], correct: "Book",  difficulty: "easy"},
+    { words: ["Salt", "Deep", "Foam"], correct: "Sea", difficulty: "medium"},
+    { words: ["House", "Thumb", "Pepper"], correct: "Green", difficulty: "hard"},
+    { words: ["Cream", "Skate", "Water"], correct: "Ice", difficulty: "easy"},
+    // Add more triads with their difficulty levels
+];
+
+// Define timerText outside the function
+var timerText = '<div id="timer">03:00</div>'; // Initial timer display
+
+// Function to shuffle and select one easy, one medium, and one hard prompt for the block
+function createRemoteAssocTask(triads) {
+    var localTimeline = [];
+    
+    var trialIndex = 0; // To track the trial number
+
+   // Timer setup
+var startTime = 180000; // 3 minutes in milliseconds
+var currentTime = startTime;
+
+// Update timer every second
+var timerInterval = setInterval(updateTimer, 1000);
+
+function updateTimer() {
+    var minutes = Math.floor(currentTime / 60000);
+    var seconds = ((currentTime % 60000) / 1000).toFixed(0);
+    seconds = (seconds < 10 ? '0' : '') + seconds;
+
+    // Display the updated time
+    document.getElementById('timer').innerHTML = '0' + minutes + ':' + seconds;
+    // Set initial timer display only for the first update
+    if (currentTime === startTime) {
+        document.getElementById('timer').innerHTML = '03:00';
+    }
+    if (currentTime <= 0 || trialIndex === 3) {
+        clearInterval(timerInterval); // Stop the timer
+        endCurrentTimeline(); // End the current local timeline
+    } else {
+        currentTime -= 1000;
+    }
+}
+
+    // Shuffle the triads for randomness
+    shuffleArray(triads);
+
+    var easyTriad, mediumTriad, hardTriad;
+
+    // Iterate through the shuffled triads to find one easy, one medium, and one hard
+    triads.forEach(function(triad) {
+        if (triad.difficulty === "easy" && !easyTriad) {
+            easyTriad = triad;
+        } else if (triad.difficulty === "medium" && !mediumTriad) {
+            mediumTriad = triad;
+        } else if (triad.difficulty === "hard" && !hardTriad) {
+            hardTriad = triad;
+        }
+
+        // If we have found one easy, one medium, and one hard triad, exit the loop
+        if (easyTriad && mediumTriad && hardTriad) {
+            return;
+        }
+    });
+
+    // Create an audio element for music playback
+    var audio = new Audio(selectRandomMusicSample());
+    audio.play();
+
+// Create trials for each selected prompt
+[easyTriad, mediumTriad, hardTriad].forEach(function(triad) {
+    var remoteAssocTrial = {
+        type: 'html-keyboard-response',
+        stimulus: timerText + // Adding timer display to stimulus
+                  '<p style="font-size: 32px;">' + triad.words.join("/") + '</p>' +
+                  '<input type="text" id="response_' + triad.correct + '" autocomplete="off">',
+        choices: jsPsych.ALL_KEYS,
+        trial_duration: 180000, // 3 minutes
+        response_ends_trial: false,
+        on_load: function() {
+            // Listen for the Enter key press within the input field
+            document.getElementById('response_' + triad.correct).addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Prevent the default behavior of Enter key
+                    var response = document.getElementById('response_' + triad.correct).value.trim().toLowerCase();
+                    jsPsych.data.get().push({ response: response });
+                    jsPsych.finishTrial();
+                }
+            });
+        },
+        on_finish: function(data) {
+            var response = document.getElementById('response_' + triad.correct).value.trim().toLowerCase();
+            data.response = response;
+            data.correctness = (response === triad.correct.toLowerCase());
+
+            trialIndex++; // Increment trial number
+        }
+    };
+
+    localTimeline.push(remoteAssocTrial);
+});
+
+    return localTimeline;
+}
+
+//Create and add Remote Associates Task trials to the timeline
+timeline.push.apply(timeline, createRemoteAssocTask(wordTriads));
+
+/* start the experiment */
+jsPsych.init({
+  timeline: timeline,
+  on_finish: function() {
+    jsPsych.data.displayData('csv');
+  }
+});
+
+</script>
+</html>
