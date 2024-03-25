@@ -70,7 +70,7 @@ var wordTriads = [
 var timerText = '<div id="timer">03:00</div>'; // Initial timer display
 
 // Function to shuffle and select one easy, one medium, and one hard prompt for the block
-function createRemoteAssocTask(triads) {
+function createRemoteAssocTask(wordTriads) {
     var localTimeline = [];
     
     var trialIndex = 0; // To track the trial number
@@ -102,12 +102,12 @@ function updateTimer() {
 }
 
     // Shuffle the triads for randomness
-    shuffleArray(triads);
+    shuffleArray(wordTriads);
 
     var easyTriad, mediumTriad, hardTriad;
 
     // Iterate through the shuffled triads to find one easy, one medium, and one hard
-    triads.forEach(function(triad) {
+    wordTriads.forEach(function(triad) {
         if (triad.difficulty === "easy" && !easyTriad) {
             easyTriad = triad;
         } else if (triad.difficulty === "medium" && !mediumTriad) {
@@ -122,9 +122,6 @@ function updateTimer() {
         }
     });
 
-    // Create an audio element for music playback
-    var audio = new Audio(selectRandomMusicSample());
-    audio.play();
 
 // Create trials for each selected prompt
 [easyTriad, mediumTriad, hardTriad].forEach(function(triad) {
