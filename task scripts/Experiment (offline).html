@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Music & Creative Cognition</title>
+  <script src="https://veldak.github.io/arousal-creativity/jspsych-6.3.1/jspsych.js"></script>
+  <script src="https://veldak.github.io/arousal-creativity/jspsych-6.3.1/plugins/jspsych-instructions.js"></script>
+  <script src="https://veldak.github.io/arousal-creativity/jspsych-6.3.1/plugins/jspsych-html-keyboard-response.js"></script>
+  <script src="https://veldak.github.io/arousal-creativity/jspsych-6.3.1/plugins/jspsych-html-button-response.js"></script>
+  <script src="https://veldak.github.io/arousal-creativity/jspsych-6.3.1/plugins/jspsych-audio-keyboard-response.js"></script>
+  <link rel="stylesheet" href="https://veldak.github.io/arousal-creativity/jspsych-6.3.1/css/jspsych.css"></link>
+</head>
+<body>
+<audio id="backgroundAudio" loop>
+    <source src="" type="audio/mpeg">
+  </audio>
+</body>
+<script>
+
+/* create timeline */
+var timeline = [];
+
+
+// Function to shuffle arrays 
+function shuffleArray(array) {
+  for (var i = array.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+// Data clean up 
+// Function to delete specified properties from the data object
+function cleanupData(data) {
+    delete data.internal_node_id;
+    delete data.view_history;
+    
+    // Convert time_elapsed to seconds
+    if (data.time_elapsed !== undefined && data.time_elapsed !== null) {
+        data.time_elapsed = Math.round(data.time_elapsed / 1000); // Convert milliseconds to seconds
+    }
+    
+    // Trim rt to remove decimal points
+    if (data.rt !== undefined && data.rt !== null) {
+        data.rt = Math.round(data.rt);
+    }
+    
+    // Add condition information to data
+    data.condition = currentCondition; 
+}
+
+// ----------------------------------------Task Instructions----------------------------------//
+// Show welcome screen instructions
+  var welcomeInstructions = {
+    type: "instructions",
+    pages: [
+      '<strong>Welcome!</strong>' + '<p> In this experiment, you will complete short creative-thinking tasks while listening to music. You will also be asked a few self-report questions. <\p>',
+      'For the integrity of our data collection, it is important that you keep the music playing for the duration of the experiment. You will be able to adjust your volume to a comfortable listening volume before you begin.',
+      'You will have the chance to take a short break between tasks. At the end of the experiment, please return to Qualtrics.',
+      'When you are ready to begin, press "Continue".'
+    ],
+    button_label_next: "Continue",
+    button_label_previous: "Back",
+    show_clickable_nav: true,
+  };
+
+
+// Show instructions for AUT - HAP condition
+function HAP_AUTinstructions() {
+  var HAP_AUTinstructions = {
+    type: "instructions",
+    pages: [
+      'In this task, you will be asked to enter as many creative, alternate uses for a common household object you can in sixty seconds.',
+      'Press enter after each new idea to submit.',
+      'There will be music playing in the background, which should be adjusted to a comfortable volume. Although the music will be playing, you do not need to focus on it as you will not be asked any particular questions about it.',
+      'On the next screen, music will begin playing for a short time before the first word prompt. When you are ready to begin, press "Continue".'
+    ],
+    button_label_next: "Continue",
+    button_label_previous: "Back",
+    show_clickable_nav: true,
+    on_finish: function() {
+    // Start music playback after the instructions are completed
+    audio.src = selectRandomMusicSampleHAP();
+    audio.play();
+     }
+  };
+  return HAP_AUTinstructions;
+}
+
+
+// Show instructions for AUT - LAP condition
+function LAP_AUTinstructions() {
+  var LAP_AUTinstructions = {
+    type: "instructions",
+    pages: [
+      'In this task, you will be asked to enter as many creative, alternate uses for a common household object you can in sixty seconds.',
+      'Press enter after each new idea to submit.',
+      'There will be music playing in the background, which should be adjusted to a comfortable volume. Although the music will be playing, you do not need to focus on it as you will not be asked any particular questions about it.',
+      'On the next screen, music will begin playing for a short time before the first word prompt. When you are ready to begin, press "Continue".'
+    ],
+    button_label_next: "Continue",
+    button_label_previous: "Back",
+    show_clickable_nav: true,
+    on_finish: function() {
+    // Start music playback after the instructions are completed
+    audio.src = selectRandomMusicSampleLAP();
+    audio.play();
+     }
+  };
+  return LAP_AUTinstructions;
+}
+
+//Function to show instructions for RAT -- HAP condition
+function HAP_RATinstructions() {
+  var HAP_RATinstructions = {
+    type: "instructions",
+    pages: [
+      'In this task, you will be presented with three words that have some association with each other.',
+      'You are asked to come up with a fourth word that associates all three words.',
+      'There will be music playing in the background, which should be adjusted to a comfortable volume. Although the music will be playing, you do not need to focus on it as you will not be asked any particular questions about it.',
+      'You will have 1 minute and 30 seconds for the entirety of the task. If you complete it earlier, you are free to proceed.',
+      'On the next screen, music will begin playing for a short time before the first trial. When you are ready to begin, press "Continue".'
+    ],
+    button_label_next: "Continue",
+    button_label_previous: "Back",
+    show_clickable_nav: true,
+    on_finish: function() {
+    // Start music playback after the instructions are completed
+    audio.src = selectRandomMusicSampleHAP();
+    audio.play();
+    }
+  };
+   return HAP_RATinstructions;
+}
+
+//Function to show instructions for RAT -- LAP condition
+function LAP_RATinstructions() {
+  var LAP_RATinstructions = {
+    type: "instructions",
+    pages: [
+      'In this task, you will be presented with three words that have some association with each other.',
+      'You are asked to come up with a fourth word that associates all three words.',
+      'There will be music playing in the background, which should be adjusted to a comfortable volume. Although the music will be playing, you do not need to focus on it as you will not be asked any particular questions about it.',
+      'You will have 1 minute and 30 seconds for the entirety of the task. If you complete it earlier, you are free to proceed.',
+      'On the next screen, music will begin playing for a short time before the first trial. When you are ready to begin, press "Continue".'
+    ],
+    button_label_next: "Continue",
+    button_label_previous: "Back",
+    show_clickable_nav: true,
+    on_finish: function() {
+    // Start music playback after the instructions are completed
+    audio.src = selectRandomMusicSampleLAP();
+    audio.play();
+    }
+  };
+   return LAP_RATinstructions;
+}
+
+
+//------------------------------------------Define Stimuli----------------------------------------------//
+
+// ---- Music Stimuli --- ///
+var musicSamplesHAP= [
+  'https://veldak.github.io/arousal-creativity/music_stim/H1.mp3', 
+  'https://veldak.github.io/arousal-creativity/music_stim/H2.mp3',
+  'https://veldak.github.io/arousal-creativity/music_stim/H3.mp3',
+  'https://veldak.github.io/arousal-creativity/music_stim/H4.mp3', 
+  'https://veldak.github.io/arousal-creativity/music_stim/H5.mp3',
+  'https://veldak.github.io/arousal-creativity/music_stim/H6.mp3'
+];
+
+var musicSamplesLAP= [
+  'https://veldak.github.io/arousal-creativity/music_stim/T1.mp3', 
+  'https://veldak.github.io/arousal-creativity/music_stim/T2.mp3',
+  'https://veldak.github.io/arousal-creativity/music_stim/T3.mp3',
+  'https://veldak.github.io/arousal-creativity/music_stim/T4.mp3', 
+  'https://veldak.github.io/arousal-creativity/music_stim/T5.mp3',
+  'https://veldak.github.io/arousal-creativity/music_stim/T6.mp3'
+];
+
+// Function to randomly select a musical sample - HAP condition
+function selectRandomMusicSampleHAP() {
+   // Randomly select a sample
+    var randomIndex = Math.floor(Math.random() * musicSamplesHAP.length);
+    var selectedHAPSample = musicSamplesHAP[randomIndex];
+    
+    // Remove the selected sample from the array
+    musicSamplesHAP.splice(randomIndex, 1);
+    
+    return selectedHAPSample;
+}
+
+// Function to randomly select a musical sample - LAP condition
+function selectRandomMusicSampleLAP() {
+   // Randomly select a sample
+    var randomIndex = Math.floor(Math.random() * musicSamplesLAP.length);
+    var selectedLAPSample = musicSamplesLAP[randomIndex];
+    
+    // Remove the selected sample from the array
+    musicSamplesLAP.splice(randomIndex, 1);
+    
+    return selectedLAPSample;
+}
+
+
+// Preload audio
+var audio = document.getElementById('backgroundAudio');
+audio.loop = true;
+
+//  AUT stimuli
+var wordPrompts = [
+ { word: 'brick', image: 'https://veldak.github.io/arousal-creativity/task_stim/brick.jpg'},
+ { word: 'paperclip', image: 'https://veldak.github.io/arousal-creativity/task_stim/paperclip.jpg'},
+ { word: 'toothpick', image: 'https://veldak.github.io/arousal-creativity/task_stim/toothpick.jpg' },
+ { word: 'fork', image: 'https://veldak.github.io/arousal-creativity/task_stim/fork.jpg' },
+ { word: 'shoe', image: 'https://veldak.github.io/arousal-creativity/task_stim/shoe.jpg' },
+ { word: 'cork', image: 'https://veldak.github.io/arousal-creativity/task_stim/cork.jpg' },
+ { word: 'chair', image: 'https://veldak.github.io/arousal-creativity/task_stim/chair.jpg' },
+ { word: 'balloon', image: 'https://veldak.github.io/arousal-creativity/task_stim/balloon.jpg' },
+ { word: 'baseball', image: 'https://veldak.github.io/arousal-creativity/task_stim/baseball.jpg' },
+ { word: 'belt', image: 'https://veldak.github.io/arousal-creativity/task_stim/belt.jpg' },
+ { word: 'broom', image: 'https://veldak.github.io/arousal-creativity/task_stim/broom.jpg' },
+ { word: 'bucket', image: 'https://veldak.github.io/arousal-creativity/task_stim/bucket.jpg' },
+ { word: 'candle', image: 'https://veldak.github.io/arousal-creativity/task_stim/candle.jpg' },
+ { word: 'hanger', image: 'https://veldak.github.io/arousal-creativity/task_stim/hanger.jpg' },
+ { word: 'hat', image: 'https://veldak.github.io/arousal-creativity/task_stim/hat.jpg' },
+ { word: 'comb', image: 'https://veldak.github.io/arousal-creativity/task_stim/comb.jpg' },
+ { word: 'pencil', image: 'https://veldak.github.io/arousal-creativity/task_stim/pencil.jpg' },
+ { word: 'pillow', image: 'https://veldak.github.io/arousal-creativity/task_stim/pillow.jpg' }
+ ];
+
+
+// RAT stimuli
+var wordTriads = [ // Define word triads with difficulty levels
+    { words: ["Opera", "Hand", "Dish"], correct: "Soap", difficulty: "medium"},
+    { words: ["Right", "Cat", "Carbon"], correct: "Copy", difficulty: "hard" },
+    { words: ["Show", "Life", "Row"], correct: "Boat", difficulty: "easy"},
+    { words: ["Blank", "List", "Mate"], correct: "Check", difficulty: "medium" },
+    { words: ["Dust", "Cereal", "Fish"], correct: "Bowl", difficulty: "hard"},
+    { words: ["Worm", "Shelf", "End"], correct: "Book",  difficulty: "easy"},
+    { words: ["Salt", "Deep", "Foam"], correct: "Sea", difficulty: "medium"},
+    { words: ["Piece", "Mind", "Dating"], correct: "Game", difficulty: "hard"},
+    { words: ["Cream", "Skate", "Water"], correct: "Ice", difficulty: "easy"},
+    { words: ["Dream", "Break", "Light"], correct: "Day", difficulty: "easy"},
+    { words: ["Mouse", "Bear", "Sand"], correct: "Trap", difficulty: "easy"},
+    { words: ["French", "Car", "Shoe"], correct: "Horn", difficulty: "medium"},
+    { words: ["Down", "Question", "Check"], correct: "Mark", difficulty: "medium"},
+    { words: ["Salt", "Deep", "Foam"], correct: "Sea", difficulty: "medium"},
+    { words: ["Carpet", "Alert", "Ink"], correct: "Red", difficulty: "medium"},
+    { words: ["Tail", "Water", "Flood"], correct: "Gate", difficulty: "hard"},
+    { words: ["Foul", "Ground", "Mate"], correct: "Play", difficulty: "hard"},
+    { words: ["Tank", "Hill", "Secret"], correct: "Top", difficulty: "hard"}
+    ];
+
+//-------------------------------Defining Additional Screens ------------------------------------//
+ 
+function moodValenceCheck() {
+    var moodValence = {
+        type: 'html-button-response',
+        stimulus: '<p>Please describe your current mood by rating how you are feeling right now.</p><p>Rate how you are feeling in terms of the <strong>pleasantness</strong> of your current state, using a scale ranging from -3 to +3.</p><p>On this scale, <strong> -3 is a very negative state</strong> and <strong> +3 is a very positive state.</strong>.</p>',
+        choices: ['-3', '-2', '-1', '0', '1', '2', '3'], // Response options
+        prompt: '<p>How do you feel?</p>', // Prompt for response
+        margin_vertical: '20px',
+        margin_horizontal: '20px',
+        post_trial_gap: 500, // Gap between trials in milliseconds (optional)
+        on_finish: function(data) {
+            // Save the response
+            data.trial_type ='valence';
+            data.stimulus = 'sr_valence'; 
+            var response = data.response;
+        }
+    };
+    return moodValence;
+}
+
+function moodArousalCheck() {
+    var moodArousal = {
+        type: 'html-button-response',
+        stimulus: '<p>Please describe your current mood by rating how you are feeling right now.</p><p>Rate how you are feeling in terms of the <strong>energy level</strong> of your current state, using a scale ranging from 1 to 7. On this scale, <strong>1 is very relaxed or low energy</strong>, and <strong>7 is very energized</strong>.</p>',
+        choices: ['1', '2', '3', '4', '5', '6', '7'], // Response options
+        prompt: '<p>How do you feel?</p>', // Prompt for response
+        margin_vertical: '20px',
+        margin_horizontal: '20px',
+        post_trial_gap: 500, // Gap between trials in milliseconds (optional)
+        on_finish: function(data) {
+            // Save the response
+            data.stimulus = 'sr_arousal'; 
+            data.trial_type = 'arousal';
+            var response = data.response;
+        }
+    };
+    return moodArousal;
+}
+
+ 
+ // Define sound test screen
+function playSound(){
+	var x = document.getElementById("testAudio");
+	x.play();
+}
+ 
+function soundTest() {
+ var sound_test = {
+    	type: 'instructions', 
+    	pages: [ '<audio id="testAudio"><source src="https://veldak.github.io/arousal-creativity/audiotest/audiotest_stim/tone.mp3" type="audio/mpeg"></audio><h1>Sound Test</h1><p>Please test your sound by clicking the button below. You may click it multiple times to adjust your volume so you can hear it clearly.</p><button onclick="playSound()" type="button" class="snd-btn"><img src="https://veldak.github.io/arousal-creativity/audiotest/audiotest_stim/sound.jpg" alt="Click to test sound" /></button>' ], 
+    	show_clickable_nav: true,
+    	button_label: "Next",
+    };
+return sound_test;
+}
+
+//Define a fixation cross screen, for playing music prior to a task
+function fixationCross(duration) {
+  var fixationTrial = {
+    type: 'html-keyboard-response',
+    stimulus: '<div style="font-size: 72px;">+</div>',
+    choices: jsPsych.NO_KEYS,
+    trial_duration: duration
+     };
+  return fixationTrial;
+}
+
+// Define a function to pause the music
+function pauseMusic() {
+    var pauseMusicTrial = {
+        type: 'html-keyboard-response',
+        stimulus: 'Thank you for completing the task. The music will now pause, feel free to take a short break. <p> Please press <b>Enter</b> to proceed with the experiment when you are ready.</p>',
+        choices: ['Enter'], // Only accept Enter key to proceed
+        trial_duration: 30000, // Trial ends after 30 seconds
+        on_start: function() {
+            audio.pause();
+        }
+    };
+    return pauseMusicTrial;
+}
+
+
+// Define auditoryAttentionCheck screen
+
+var audioTestStim = [ 
+    'https://veldak.github.io/arousal-creativity/audiotest/audiotest_stim/c.mp3',
+    'https://veldak.github.io/arousal-creativity/audiotest/audiotest_stim/d.mp3',
+    'https://veldak.github.io/arousal-creativity/audiotest/audiotest_stim/g.mp3',
+    'https://veldak.github.io/arousal-creativity/audiotest/audiotest_stim/k.mp3',
+    'https://veldak.github.io/arousal-creativity/audiotest/audiotest_stim/p.mp3',
+    'https://veldak.github.io/arousal-creativity/audiotest/audiotest_stim/q.mp3',
+    'https://veldak.github.io/arousal-creativity/audiotest/audiotest_stim/t.mp3',
+];
+
+function auditoryAttentionCheck(audioTestStim) {
+    var randomIndex = Math.floor(Math.random() * audioTestStim.length);
+    var selectedStimulus = audioTestStim[randomIndex];
+    var fileName = selectedStimulus.split('/').pop().split('.')[0];
+
+    var attentionCheckTrial = {
+        type: 'audio-keyboard-response',
+        stimulus: selectedStimulus,
+        choices: [fileName],
+        prompt: '<h1>Attention Check</h1>' +
+                '<p>Please press the key that you hear playing in the audio.</p>' +
+                '<p>You can click the button to replay the audio as many times as needed.</p>' +
+                '<button onclick="replayAudio(\'' + selectedStimulus + '\')" type="button" class="snd-btn">' +
+                '<img src="https://veldak.github.io/arousal-creativity/audiotest/audiotest_stim/sound.jpg" ' +
+                'alt="Click to replay sound" /></button>',
+        trial_ends_after_audio: false,
+        response_allowed_while_playing: true,
+        on_finish: function(data) {
+            // Update the stimulus property in the data object
+            data.trial_type = 'attention_check';
+            data.stimulus = fileName;
+        }
+    };
+    return attentionCheckTrial;
+}
+
+
+// Define a function to replay the audio
+function replayAudio(selectedStimulus) {
+    var audioCheck = new Audio(selectedStimulus);
+    audioCheck.play();
+}
+
+// Define a function to display end screen
+function midPointScreen() {
+    var midPointTrial = {
+        type: 'html-keyboard-response',
+        stimulus: 'You have completed the first half of the experiment. Please feel free to take a longer break before proceeding to the remainder of the experiment. We recommend a break of at least 5 minutes, but you can press <strong> any key </strong> to proceed when you are ready.',
+        trial_duration: null, // Wait indefinitely until a response is given
+        response_ends_trial: true, // End trial on any key press
+        on_start: function() {
+            // Pause the background music
+            audio.pause();
+        }
+    };
+    return midPointTrial;
+}
+
+// Define a function to display end screen
+function endScreen() {
+    var endScreenTrial = {
+        type: 'html-keyboard-response',
+        stimulus: 'You have completed the experiment, thank you for your participation. Please press any button to close this screen and return to Qualtrics.',
+        trial_duration: null, // Wait indefinitely until a response is given
+        response_ends_trial: true, // End trial on any key press
+        on_start: function() {
+            // Pause the background music
+            audio.pause();
+        }
+    };
+    return endScreenTrial;
+}
+
+//-------------------------------Defining the Alternate Uses Task------------------------------------//
+// Define a function to create the alternate uses trial
+function createAlternateUsesTrial() {
+  
+  // Shuffle the wordPrompts array to ensure randomization
+  shuffleArray(wordPrompts);
+  
+  // Get the prompt from the shuffled array
+  var wordPrompt = wordPrompts.shift();
+  
+  // Define the alternate uses trial object
+  var alternateUsesTrial = {
+    type: "html-keyboard-response",
+    stimulus: '<p style="font-size: 32px; font-weight: bold;">' + wordPrompt.word + '</p>' +
+     '<img src="' + wordPrompt.image + '" />' + 
+      '<textarea id="responseArea" rows="3" cols="65"></textarea>' +
+      '<p id="AUTtimer">Time remaining: 60 seconds</p>',
+    choices: jsPsych.ALL_KEYS,
+    response_ends_trial: false,
+    trial_duration: 60000,
+    on_load: function () {
+      // Define event listener for the Enter key press
+      document.getElementById('responseArea').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          var response = document.getElementById('responseArea').value.trim();
+          var trial_data = {
+            response: response,
+            stimulus: wordPrompt,
+            trial_index: jsPsych.currentTrial().trial_index
+          };
+          jsPsych.data.get().push(trial_data);
+          document.getElementById('responseArea').value = '';
+        }
+      });
+      
+
+      // Define timer logic
+      var timerElement = document.getElementById('AUTtimer');
+      var timeLeft = 60;
+      var timerInterval = setInterval(function () {
+        timeLeft--;
+        timerElement.textContent = 'Time remaining: ' + timeLeft + ' seconds';
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          jsPsych.endCurrentTrial();
+        }
+      }, 1000);
+    },
+    on_finish: function(data) {
+        data.trial_type = 'AUT';
+    }
+  };
+
+  return alternateUsesTrial;
+}
+
+//---------Defining the AUT task blocks---------
+
+// Define the function to create HAP_AUTblock with its own set of prompts
+function HAP_AUTblock() {
+    return {
+        timeline: [
+            HAP_AUTinstructions(),
+            fixationCross(15000),
+            createAlternateUsesTrial(),
+            createAlternateUsesTrial(),
+            createAlternateUsesTrial(),
+            pauseMusic()
+        ],
+        randomize_order: false
+    };
+}
+
+// Define the function to create HAP_AUTblock with its own set of prompts
+function LAP_AUTblock() {
+    return {
+        timeline: [
+            LAP_AUTinstructions(),
+            fixationCross(15000),
+            createAlternateUsesTrial(),
+            createAlternateUsesTrial(),
+            createAlternateUsesTrial(),
+            pauseMusic()
+        ],
+        randomize_order: false
+    };
+}
+//-----------------------------Defining the Remote Associates Task-----------------------------------// 
+//----Timer functionality-----
+var startTime = 90000; //1 minute and 30 secs in milliseconds
+var currentTime = startTime;
+
+// Update timer every second
+var timerInterval = setInterval(updateTimer, 1000);
+
+function updateTimer() {
+    var minutes = Math.floor(currentTime / 60000);
+    var seconds = ((currentTime % 60000) / 1000).toFixed(0);
+    seconds = (seconds < 10 ? '0' : '') + seconds;
+
+    // Display the updated time
+    document.getElementById('RATtimer').innerHTML = 'Time remaining: ' + minutes + ' minutes and ' + seconds + ' seconds';
+    if (currentTime <= 0) {
+        clearInterval(timerInterval); // Stop the timer
+        endCurrentTimeline(); // End the current local timeline
+    } else {
+        currentTime -= 1000;
+    }
+}
+
+// Create a single Remote Associates Task trial
+function createRemoteAssocTask(wordTriad) {
+    var remoteAssocTrial = {
+        type: 'html-keyboard-response',
+        stimulus: '<p style="font-size: 40px;">' + wordTriad.words.join(" / ") + '</p>' +
+                	'<input type="text" id="response_' + wordTriad.correct + '" autocomplete="off">'+
+                	'<p id="RATtimer"></p>', // Initial timer display
+        choices: jsPsych.ALL_KEYS,
+        trial_duration: 90000, // 1 minute and 30 seconds
+        response_ends_trial: false,
+        on_load: function() {
+            // Listen for the Enter key press within the input field
+            document.getElementById('response_' + wordTriad.correct).addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Prevent the default behavior of Enter key
+                    var response = document.getElementById('response_' + wordTriad.correct).value.trim().toLowerCase();
+                    jsPsych.finishTrial({ response: response, correctness: (response === wordTriad.correct.toLowerCase()) });
+                }
+            });
+        },
+         on_finish: function(data) {
+            data.trial_type = 'RAT'; // Specify trial_type as 'RAT'
+           }
+    };
+
+    return remoteAssocTrial;
+}
+
+//---Add three Remote Associates Task trials to the timeline, one of each difficulty---
+shuffleArray(wordTriads);
+var remoteAssocBlock = []; // Initialize as an empty array
+var difficultyLevels = {
+    easy: [],
+    medium: [],
+    hard: []
+};
+
+// Group word triads by difficulty level
+wordTriads.forEach(function(triad) {
+    difficultyLevels[triad.difficulty].push(triad);
+});
+
+// Shuffle each difficulty level array
+Object.values(difficultyLevels).forEach(function(level) {
+    shuffleArray(level);
+});
+
+// Add one trial of each difficulty level to the block
+['easy', 'medium', 'hard'].forEach(function(difficulty) {
+    var triad = difficultyLevels[difficulty].pop(); // Remove and get the last element
+    var trial = createRemoteAssocTask(triad); // Create trial from the triad
+    remoteAssocBlock.push(trial); // Add each trial to the block
+});
+
+
+
+// Define the function to create RATblocks 
+function HAP_RATblock() {
+// Reset the current time to the start time for each block
+    currentTime = startTime;
+    
+    return {
+        timeline: [
+            HAP_RATinstructions(),
+            fixationCross(15000),
+            ...remoteAssocBlock,
+            pauseMusic()
+        ],
+        randomize_order: false
+    };
+}
+
+function LAP_RATblock() {
+// Reset the current time to the start time for each block
+    currentTime = startTime;
+    
+    return {
+        timeline: [
+            LAP_RATinstructions(),
+            fixationCross(15000),
+            ...remoteAssocBlock,
+            pauseMusic()
+        ],
+        randomize_order: false
+    };
+}
+
+//------------------------------ experiment management (task orders) ---------------------------//
+
+// Add instructions, audio test, moodValence, and moodArousal
+timeline.push(welcomeInstructions);
+timeline.push(soundTest());
+timeline.push(moodValenceCheck());
+timeline.push(moodArousalCheck());
+
+//var to store condition (HAP or LAP)
+var condition; 
+
+// Function to add HAP or LAP condition based on randomization
+function addCondition(condition) {
+    // Set the current condition
+    currentCondition = condition;
+    
+    // Create an array to hold pairs of blocks for the condition
+    var blockPairs = [];
+    
+    // Alternate between AUT and RAT blocks
+    for (var i = 0; i < 3; i++) {
+        if (condition === "HAP") {
+            blockPairs.push(HAP_RATblock());
+            blockPairs.push(HAP_AUTblock());
+        } else if (condition === "LAP") {
+            blockPairs.push(LAP_RATblock());
+            blockPairs.push(LAP_AUTblock());
+        }
+    }
+
+    // Shuffle the order of pairs
+    shuffleArray(blockPairs);
+    
+    // Add the shuffled pairs to the timeline
+    blockPairs.forEach(function(pair, index) {
+        timeline.push(pair);
+        // If the current pair is complete (both AUT and RAT blocks are added)
+        // and it's not the last pair, add an auditory attention check
+        if ((index + 1) % 2 === 0 && index < blockPairs.length - 1) {
+            timeline.push(auditoryAttentionCheck(audioTestStim));
+        }
+    });
+}
+
+
+// Randomly determine the order of conditions
+var conditionOrder = Math.random() < 0.5 ? ["HAP", "LAP"] : ["LAP", "HAP"];
+
+// Add conditions in random order
+var conditionCounter = 0;
+conditionOrder.forEach(function(condition) {
+    addCondition(condition);
+    // Check if it's not the last condition
+    if (conditionCounter < conditionOrder.length - 1) {
+        timeline.push(midPointScreen());
+        timeline.push(moodValenceCheck());
+        timeline.push(moodArousalCheck());
+    }
+    conditionCounter++;
+});
+
+
+// Display end screen
+timeline.push(endScreen());
+  
+  
+/* start the experiment */
+jsPsych.init({
+  timeline: timeline,
+  on_finish: function() {
+    //jsPsych.data.displayData('csv');
+  },
+  on_data_update: function(data) {
+    // Delete specified properties from the data object
+    cleanupData(data);
+}
+});
+
+</script>
+</html>
